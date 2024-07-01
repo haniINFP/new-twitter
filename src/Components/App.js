@@ -5,11 +5,13 @@ import { authService } from "fbase";
 function App() {
   const[init, setInit] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userObj, setUserObj] = useState(null);
 
   useEffect(() => {
     authService.onAuthStateChanged((user) => {
       if(user) {
         setIsLoggedIn (user);
+        setUserObj (user);
       } else {
         setIsLoggedIn(false);
       }
@@ -22,7 +24,7 @@ function App() {
   
   return (
     <>
-    {init ? <AppRouter isLoggedIn= {isLoggedIn} /> : "initializing..."}
+    {init ? (<AppRouter isLoggedIn= {isLoggedIn} userObj={userObj}/> ): ("initializing...")}
     {/* init은 애초에 false임. 그럼 initializing을 띄워줄거임. approuter로 이동하는 시점은 상태 변화가 일어났을 때.
     랜더가 끝나면 useEffect실행됨->로그인 여부 판단->끝나면 AppRouter가 출력됨 */}
     <footer>&copy; {new Date().getFullYear()} Nwitter</footer>

@@ -1,34 +1,65 @@
 import { dbService } from "fbase";
-import { collection, addDoc } from "firebase/firestore";
-import { useState } from "react";
 
-const Home = () => {
-    const[nweet, setNweet] = useState("");
-    //빈 값으로 초기화 해주기
-    const onSubmit = (event) => {
-        event.preventDefault();
-    };
-    const onChange = (event) => {
-        event.preventDefault();
-        const {
-            target: {value},
-                } = event;
-            setNweet(value);
-            }
-    
-    
-    return (
-        <form>
-            <input
-            type="text"
-            placeholder="What's on your mind?"
-            maxLength = {120}
-            onChange = {onChange}
-            value = {nweet}
-            />
-            <input type="submit" value="Nweet"
-            />
-            </form>
-)}
+import { collection, addDoc, onSnapshot } from "firebase/firestore";
 
+import { useEffect, useState } from "react";
+import Nweet from "Components/Nweet";
+
+const Home = ({ userObj }) => {
+  const [nweet, setNweet] = useState("");
+  const [nweets, setNweets] = useState([]);
+
+  useEffect(() => {
+    onSnapshot(collection(dbService, "nweets"), (snapshot) => {
+      const newArray = snapshot.docs.map((document) => ({
+        id: document.id,
+        ...document.data(),
+      }));
+      setNweets(newArray);
+    });
+  }, []);
+
+  const onSubmit = async (event) => {
+    event.preventDefault();
+    await addDoc(collection(dbService, "nweets"), {
+      text: nweet,
+      createdAt: Date.now(),
+      creatorId: userObj.uid,
+    });
+    setNweet("");
+  };
+
+  const onChange = (event) => {
+    event.preventDefault();
+
+    const {
+      target: { value },
+    } = event;
+    setNweet(value);
+  };
+
+  return (
+    <>
+      <form onSubmit={onSubmit}>
+        <input
+          value={nweet}
+          onChange={onChange}
+          type="text"
+          placeholder="What's on your mind?"
+          maxLength={120}
+        />
+        <input type="submit" value="Nweet" />
+      </form>
+      <div>
+        {nweets.map((nweet) => (
+          <Nweet
+            key={nweet.id}
+            nweetObj={nweet}
+            isOwner={nweet.creatorId === userObj.uid}
+          />
+        ))}
+      </div>
+    </>
+  );
+};
 export default Home;
